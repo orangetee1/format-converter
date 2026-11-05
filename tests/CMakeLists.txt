@@ -13,7 +13,7 @@ set(BUILD_GMOCK OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
 add_executable(lab4_tests
-    smoke_test.cpp
+    error_test.cpp
 )
 
 target_link_libraries(lab4_tests PRIVATE lab4_core lab4_warnings GTest::gtest_main)
