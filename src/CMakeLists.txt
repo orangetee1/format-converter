@@ -1,5 +1,6 @@
 add_library(lab4_core STATIC
     core/version.cpp
+    core/error.cpp
 )
 
 target_include_directories(lab4_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

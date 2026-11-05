@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.25)
 
 project(lab4 LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -14,7 +14,6 @@ if(NOT LAB4_IS_MULTI_CONFIG AND NOT CMAKE_BUILD_TYPE)
 endif()
 
 option(LAB4_BUILD_TESTS "Build unit tests (GoogleTest)" ON)
-option(LAB4_SANITIZERS "Build with AddressSanitizer + UndefinedBehaviorSanitizer" OFF)
 option(LAB4_WERROR "Treat compiler warnings as errors" OFF) 
 
 add_library(lab4_warnings INTERFACE)
@@ -29,14 +28,6 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     if(LAB4_WERROR)
         target_compile_options(lab4_warnings INTERFACE -Werror)
     endif()
-endif()
-
-if(LAB4_SANITIZERS)
-    if(NOT CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-        message(FATAL_ERROR "LAB4_SANITIZERS is supported only for GCC/Clang")
-    endif()
-    add_compile_options(-fsanitize=address,undefined -fno-omit-frame-pointer)
-    add_link_options(-fsanitize=address,undefined)
 endif()
 
 add_subdirectory(src)
