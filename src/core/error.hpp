@@ -22,8 +22,7 @@ enum class ErrorKind {
     Syntax,       // нарушена грамматика формата: "expected ',' or '}'"
     Unsupported,  // корректно для формата, но вне общего подмножества: null
     Semantic,     // синтаксис верен, смысл нет: дубликат ключа
-    Limit,        // превышен лимит реализации: глубина вложенности
-    Io,           // ошибка ввода-вывода: не удалось прочитать stdin
+    Io,          // ошибка ввода-вывода: не удалось прочитать stdin
 };
 
 [[nodiscard]] constexpr std::string_view to_string(ErrorKind kind) noexcept {
@@ -34,8 +33,6 @@ enum class ErrorKind {
             return "unsupported";
         case ErrorKind::Semantic:
             return "semantic";
-        case ErrorKind::Limit:
-            return "limit";
         case ErrorKind::Io:
             return "io";
     }
