@@ -7,12 +7,11 @@ char Cursor::advance() noexcept {
         return '\0';
     }
     const char c = text_[offset_++];
-    const auto byte = static_cast<unsigned char>(c);
 
     if (c == '\n') {
         ++position_.line;
         position_.column = 1;
-    } else if ((byte & 0xC0U) != 0x80U) {
+    } else {
         ++position_.column;
     }
     return c;

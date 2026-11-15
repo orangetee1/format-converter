@@ -3,9 +3,12 @@
 #include <cstddef>
 #include <string_view>
 
-#include "core/error.hpp"
-
 namespace lab4 {
+
+struct Position {
+    std::size_t line = 1;
+    std::size_t column = 1;
+};
 
 class Cursor final {
 public:
