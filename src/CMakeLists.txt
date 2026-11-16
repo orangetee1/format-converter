@@ -1,6 +1,10 @@
 add_library(lab4_core STATIC
-    core/version.cpp
+    core/cursor.cpp
     core/error.cpp
+    core/value.cpp
+    formats/json.cpp
+    formats/toml.cpp
+    formats/xml.cpp
 )
 
 target_include_directories(lab4_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
