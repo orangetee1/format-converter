@@ -1,12 +1,14 @@
 #pragma once
 
+// Мелкие помощники для текста: классы символов, числа, строка в кавычках.
+
 #include <array>
 #include <charconv>
-#include <concepts>
-#include <expected>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <system_error>
+#include <type_traits>
 
 namespace lab4 {
 
@@ -15,7 +17,7 @@ namespace lab4 {
 }
 
 [[nodiscard]] constexpr int hex_value(char c) noexcept {
-    if (c >= '0' && c <= '9') {
+    if (is_digit(c)) {
         return c - '0';
     }
     if (c >= 'a' && c <= 'f') {
@@ -27,53 +29,59 @@ namespace lab4 {
     return -1;
 }
 
-bool encode_utf8(char32_t code_point, std::string& out);
-
-template <std::integral T>
-[[nodiscard]] std::expected<T, std::errc> parse_number(std::string_view text,
-                                                       int base = 10) {
-    T value{};
-    const char* const end = text.data() + text.size();
-    const auto [ptr, ec] = std::from_chars(text.data(), end, value, base);
-    if (ec != std::errc{}) {
-        return std::unexpected(ec);
-    }
-    if (ptr != end) {
-        return std::unexpected(std::errc::invalid_argument);
-    }
-    return value;
+[[nodiscard]] constexpr bool is_allowed_char(char c) noexcept {
+    return (c >= 0x20 && c < 0x7F) || c == '\t' || c == '\n' || c == '\r';
 }
 
-template <std::floating_point T>
-[[nodiscard]] std::expected<T, std::errc> parse_number(std::string_view text) {
+template <class T>
+[[nodiscard]] std::optional<T> parse_number(std::string_view text) {
     T value{};
     const char* const end = text.data() + text.size();
     const auto [ptr, ec] = std::from_chars(text.data(), end, value);
-    if (ec != std::errc{}) {
-        return std::unexpected(ec);
-    }
-    if (ptr != end) {
-        return std::unexpected(std::errc::invalid_argument);
+    if (ec != std::errc{} || ptr != end) {
+        return std::nullopt;
     }
     return value;
 }
 
 template <class T>
-    requires std::integral<T> || std::floating_point<T>
 [[nodiscard]] std::string format_number(T value) {
-    std::array<char, 64> buffer{};
-    const auto [ptr, ec] =
+    std::array<char, 32> buffer{};
+    const auto result =
         std::to_chars(buffer.data(), buffer.data() + buffer.size(), value);
-
-    static_cast<void>(ec);
-
-    std::string text(buffer.data(), ptr);
-    if constexpr (std::floating_point<T>) {
+    std::string text(buffer.data(), result.ptr);
+    if constexpr (std::is_floating_point_v<T>) {
         if (text.find_first_of(".en") == std::string::npos) {
             text += ".0";
         }
     }
     return text;
+}
+
+[[nodiscard]] inline std::string quote(std::string_view text) {
+    std::string out = "\"";
+    for (const char c : text) {
+        switch (c) {
+            case '"':
+                out += "\\\"";
+                break;
+            case '\\':
+                out += "\\\\";
+                break;
+            case '\n':
+                out += "\\n";
+                break;
+            case '\t':
+                out += "\\t";
+                break;
+            case '\r':
+                out += "\\r";
+                break;
+            default:
+                out += c;
+        }
+    }
+    return out + '"';
 }
 
 }  // namespace lab4
