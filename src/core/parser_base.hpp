@@ -138,7 +138,7 @@ protected:
 
     // Число по грамматике раздела 3: -?(0|[1-9]\d*)(\.\d+)?([eE][+-]?\d+)?
     // TOML разрешает ещё ведущий '+' (allow_plus). С '.' или 'e' — float,
-    // иначе int; выход за пределы int64 или double — ошибка.
+    // иначе int; выход за пределы int64 или double - ошибка.
     template <class Self>
     [[nodiscard]] Result<Value> parse_number_value(this Self& self,
                                                    bool allow_plus) {
