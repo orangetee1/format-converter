@@ -2,61 +2,29 @@
 
 #include <cstddef>
 #include <expected>
-#include <iosfwd>
-#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
 
 namespace lab4 {
 
-struct Position {
-    std::size_t line = 1;
-    std::size_t column = 1;
-
-    friend constexpr bool operator==(const Position&,
-                                     const Position&) = default;
-};
-
-enum class ErrorKind {
-    Syntax,       // нарушена грамматика формата: "expected ',' or '}'"
-    Unsupported,  // корректно для формата, но вне общего подмножества: null
-    Semantic,     // синтаксис верен, смысл нет: дубликат ключа
-    Io,          // ошибка ввода-вывода: не удалось прочитать stdin
-};
-
-[[nodiscard]] constexpr std::string_view to_string(ErrorKind kind) noexcept {
-    switch (kind) {
-        case ErrorKind::Syntax:
-            return "syntax";
-        case ErrorKind::Unsupported:
-            return "unsupported";
-        case ErrorKind::Semantic:
-            return "semantic";
-        case ErrorKind::Io:
-            return "io";
-    }
-    std::unreachable();
-}
-
 struct Error {
-    ErrorKind kind = ErrorKind::Syntax;
-    std::string format{};  // "json" / "toml" / "xml";
-    std::string message{};
-    std::optional<Position> position{};
-
-    friend bool operator==(const Error&, const Error&) = default;
+    std::string format;      // "json" / "toml" / "xml"
+    std::size_t line = 0;    // с 1; 0 — без позиции
+    std::size_t column = 0;  // с 1, в байтах
+    std::string message;
 };
 
 template <class T>
 using Result = std::expected<T, Error>;
 
-[[nodiscard]] std::string render_error(
-    const Error& error, std::string_view source,
-    std::string_view source_name = "<stdin>");
+[[nodiscard]] inline std::unexpected<Error> conversion_error(
+    std::string_view format, std::string message) {
+    return std::unexpected(
+        Error{std::string(format), 0, 0, std::move(message)});
+}
 
-std::ostream& operator<<(std::ostream& os, const Position& position);
-std::ostream& operator<<(std::ostream& os, ErrorKind kind);
-std::ostream& operator<<(std::ostream& os, const Error& error);
+[[nodiscard]] std::string render_error(const Error& error,
+                                       std::string_view source);
 
 }  // namespace lab4

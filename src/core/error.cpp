@@ -1,120 +1,39 @@
 #include "core/error.hpp"
 
-#include <ostream>
-#include <string>
+#include <format>
 
 namespace lab4 {
 
-namespace {
+std::string render_error(const Error& error, std::string_view source) {
+    if (error.line == 0) {
+        return std::format("error: {}: {}\n", error.format, error.message);
+    }
+    std::string out = std::format("error: {}:{}:{}: {}\n", error.format,
+                                  error.line, error.column, error.message);
 
-std::optional<std::string_view> nth_line(std::string_view source,
-                                         std::size_t line_number) {
+    // пропускаем line - 1 переводов строки.
     std::size_t begin = 0;
-    for (std::size_t current = 1; current < line_number; ++current) {
+    for (std::size_t i = 1; i < error.line; ++i) {
         const std::size_t newline = source.find('\n', begin);
         if (newline == std::string_view::npos) {
-            return std::nullopt;  // строк меньше, чем line_number
+            return out;  // такой строки нет
         }
         begin = newline + 1;
     }
-
     std::string_view line = source.substr(begin);
     line = line.substr(0, line.find('\n'));
-    if (!line.empty() && line.back() == '\r') {
-        line.remove_suffix(1);
+    if (line.ends_with('\r')) {
+        line.remove_suffix(1);  // CRLF
     }
-    return line;
-}
 
-std::string caret_padding(std::string_view line, std::size_t column) {
     std::string padding;
-    std::size_t current_column = 1;
-    for (std::size_t i = 0; i < line.size() && current_column < column; ++i) {
-        const auto byte = static_cast<unsigned char>(line[i]);
-        if ((byte & 0xC0U) == 0x80U) {
-            continue;  // байт продолжения: тот же символ, позиция не растёт
-        }
-        padding += (byte == '\t') ? '\t' : ' ';
-        ++current_column;
+    for (std::size_t i = 0; i + 1 < error.column; ++i) {
+        padding += (i < line.size() && line[i] == '\t') ? '\t' : ' ';
     }
-
-    if (current_column < column) {
-        padding.append(column - current_column, ' ');
-    }
-    return padding;
-}
-
-}  // namespace
-
-std::string render_error(const Error& error, std::string_view source,
-                         std::string_view source_name) {
-    // Строка 1: "error[<kind>]: [<format>: ]<message>"
-    std::string out = "error[";
-    out += to_string(error.kind);
-    out += "]: ";
-    if (!error.format.empty()) {
-        out += error.format;
-        out += ": ";
-    }
-    out += error.message;
-    out += '\n';
-
-    if (!error.position) {
-        return out;
-    }
-    const Position position = *error.position;
-
-    // Строка 2: " --> <source_name>:<line>:<column>"
-    out += " --> ";
-    out += source_name;
-    out += ':';
-    out += std::to_string(position.line);
-    out += ':';
-    out += std::to_string(position.column);
-    out += '\n';
-
-    const std::optional<std::string_view> line =
-        nth_line(source, position.line);
-    if (!line) {
-        return out;
-    }
-
-    // Строки 3–4: фрагмент исходника и «каретка».
-    const std::string number = std::to_string(position.line);
-    const std::string gutter(number.size(), ' ');
-
-    out += "  ";
-    out += number;
-    out += " | ";
-    out += *line;
-    out += '\n';
-
-    out += "  ";
-    out += gutter;
-    out += " | ";
-    out += caret_padding(*line, position.column);
-    out += "^\n";
+    const std::string number = std::to_string(error.line);
+    out += std::format("  {} | {}\n  {} | {}^\n", number, line,
+                       std::string(number.size(), ' '), padding);
     return out;
-}
-
-std::ostream& operator<<(std::ostream& os, const Position& position) {
-    return os << position.line << ':' << position.column;
-}
-
-std::ostream& operator<<(std::ostream& os, ErrorKind kind) {
-    return os << to_string(kind);
-}
-
-std::ostream& operator<<(std::ostream& os, const Error& error) {
-    os << '[' << error.kind << "] ";
-    if (!error.format.empty()) {
-        os << error.format << ": ";
-    }
-    os << error.message;
-    if (error.position) {
-        os << " at " << *error.position;
-    }
-    return os;
 }
 
 }  // namespace lab4
